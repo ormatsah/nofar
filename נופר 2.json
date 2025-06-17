@@ -1,0 +1,50 @@
+{
+  "name": "ממיר תמונות לדפי צביעה",
+  "short_name": "דפי צביעה", 
+  "description": "המר תמונות לדפי צביעה מקסימים בקלות",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192", 
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png", 
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["photo", "graphics", "art", "utilities"],
+  "shortcuts": [
+    {
+      "name": "המר תמונה חדשה",
+      "short_name": "המר", 
+      "description": "פתח ישירות להמרת תמונה",
+      "url": "/",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}

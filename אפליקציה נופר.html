@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ממיר תמונות לדפי צביעה</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            background: linear-gradient(45deg, #f8f9ff, #e8f0ff);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: #ff6b6b;
+            background: linear-gradient(45deg, #fff5f5, #ffe8e8);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .upload-area:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .upload-text {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .upload-hint {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .images-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .image-box {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .image-box h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .image-box img, .image-box canvas {
+            max-width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-btn {
+            margin-top: 15px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .images-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 ממיר תמונות לדפי צביעה</h1>
+            <p>העלה תמונה והמר אותה לדף צביעה מקסים</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-section">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <span class="upload-icon">📷</span>
+                    <div class="upload-text">לחץ כאן להעלאת תמונה</div>
+                    <div class="upload-hint">תומך בפורמטים: JPG, PNG, JPEG</div>
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="thresholdSlider">עוצמת קווי המתאר</label>
+                    <input type="range" id="thresholdSlider" class="slider" min="50" max="200" value="100">
+                    <span id="thresholdValue">100</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="blurSlider">החלקת קווים</label>
+                    <input type="range" id="blurSlider" class="slider" min="0" max="10" value="1">
+                    <span id="blurValue">1</span>
+                </div>
+            </div>
+
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>מעבד את התמונה...</p>
+            </div>
+
+            <div class="result-section">
+                <div class="images-container">
+                    <div class="image-box">
+                        <h3>🖼️ התמונה המקורית</h3>
+                        <img id="originalImage" alt="תמונה מקורית">
+                    </div>
+                    <div class="image-box">
+                        <h3>🎨 דף הצביעה</h3>
+                        <canvas id="resultCanvas"></canvas>
+                        <br>
+                        <button class="button download-btn" onclick="downloadImage()">💾 הורד דף צביעה</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalImageData = null;
+        let canvas = document.getElementById('resultCanvas');
+        let ctx = canvas.getContext('2d');
+
+        // Elements
+        const fileInput = document.getElementById('fileInput');
+        const originalImage = document.getElementById('originalImage');
+        const resultSection = document.querySelector('.result-section');
+        const loading = document.querySelector('.loading');
+        const thresholdSlider = document.getElementById('thresholdSlider');
+        const blurSlider = document.getElementById('blurSlider');
+        const thresholdValue = document.getElementById('thresholdValue');
+        const blurValue = document.getElementById('blurValue');
+
+        // Event listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        thresholdSlider.addEventListener('input', updateThreshold);
+        blurSlider.addEventListener('input', updateBlur);
+
+        function updateThreshold() {
+            thresholdValue.textContent = thresholdSlider.value;
+            if (originalImageData) {
+                processImage();
+            }
+        }
+
+        function updateBlur() {
+            blurValue.textContent = blurSlider.value;
+            if (originalImageData) {
+                processImage();
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('אנא בחר קובץ תמונה תקין');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImage.src = e.target.result;
+                originalImage.onload = function() {
+                    showLoading();
+                    setTimeout(() => {
+                        processImage();
+                        hideLoading();
+                        resultSection.style.display = 'block';
+                    }, 500);
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showLoading() {
+            loading.style.display = 'block';
+        }
+
+        function hideLoading() {
+            loading.style.display = 'none';
+        }
+
+        function processImage() {
+            const img = originalImage;
+            
+            // Set canvas size
+            const maxSize = 800;
+            let { width, height } = img;
+            
+            if (width > height) {
+                if (width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw original image
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // Get image data
+            const imageData = ctx.getImageData(0, 0, width, height);
+            originalImageData = new Uint8ClampedArray(imageData.data);
+            
+            // Apply edge detection
+            const processedData = applyEdgeDetection(imageData, parseInt(thresholdSlider.value), parseInt(blurSlider.value));
+            
+            // Put processed data back
+            ctx.putImageData(processedData, 0, 0);
+        }
+
+        function applyEdgeDetection(imageData, threshold, blur) {
+            const data = imageData.data;
+            const width = imageData.width;
+            const height = imageData.height;
+            const output = new ImageData(width, height);
+            const outputData = output.data;
+
+            // Convert to grayscale first
+            const grayscale = new Array(width * height);
+            for (let i = 0; i < data.length; i += 4) {
+                const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                grayscale[i / 4] = gray;
+            }
+
+            // Apply Gaussian blur if needed
+            let blurredGrayscale = grayscale;
+            if (blur > 0) {
+                blurredGrayscale = applyGaussianBlur(grayscale, width, height, blur);
+            }
+
+            // Sobel edge detection
+            const sobelX = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
+            const sobelY = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
+
+            for (let y = 1; y < height - 1; y++) {
+                for (let x = 1; x < width - 1; x++) {
+                    let gx = 0, gy = 0;
+                    
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const pixel = blurredGrayscale[(y + ky) * width + (x + kx)];
+                            const kernelIndex = (ky + 1) * 3 + (kx + 1);
+                            gx += pixel * sobelX[kernelIndex];
+                            gy += pixel * sobelY[kernelIndex];
+                        }
+                    }
+                    
+                    const magnitude = Math.sqrt(gx * gx + gy * gy);
+                    const edge = magnitude > threshold ? 0 : 255;
+                    
+                    const index = (y * width + x) * 4;
+                    outputData[index] = edge;     // R
+                    outputData[index + 1] = edge; // G
+                    outputData[index + 2] = edge; // B
+                    outputData[index + 3] = 255;  // A
+                }
+            }
+
+            // Fill borders with white
+            for (let x = 0; x < width; x++) {
+                // Top and bottom borders
+                for (let border of [0, height - 1]) {
+                    const index = (border * width + x) * 4;
+                    outputData[index] = outputData[index + 1] = outputData[index + 2] = 255;
+                    outputData[index + 3] = 255;
+                }
+            }
+            
+            for (let y = 0; y < height; y++) {
+                // Left and right borders
+                for (let border of [0, width - 1]) {
+                    const index = (y * width + border) * 4;
+                    outputData[index] = outputData[index + 1] = outputData[index + 2] = 255;
+                    outputData[index + 3] = 255;
+                }
+            }
+
+            return output;
+        }
+
+        function applyGaussianBlur(grayscale, width, height, radius) {
+            const sigma = radius / 3;
+            const kernel = createGaussianKernel(radius, sigma);
+            const blurred = new Array(width * height);
+
+            // Horizontal pass
+            const temp = new Array(width * height);
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let sum = 0;
+                    let weightSum = 0;
+                    
+                    for (let i = -radius; i <= radius; i++) {
+                        const sampleX = Math.max(0, Math.min(width - 1, x + i));
+                        const weight = kernel[i + radius];
+                        sum += grayscale[y * width + sampleX] * weight;
+                        weightSum += weight;
+                    }
+                    
+                    temp[y * width + x] = sum / weightSum;
+                }
+            }
+
+            // Vertical pass
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    let sum = 0;
+                    let weightSum = 0;
+                    
+                    for (let i = -radius; i <= radius; i++) {
+                        const sampleY = Math.max(0, Math.min(height - 1, y + i));
+                        const weight = kernel[i + radius];
+                        sum += temp[sampleY * width + x] * weight;
+                        weightSum += weight;
+                    }
+                    
+                    blurred[y * width + x] = sum / weightSum;
+                }
+            }
+
+            return blurred;
+        }
+
+        function createGaussianKernel(radius, sigma) {
+            const kernel = new Array(radius * 2 + 1);
+            let sum = 0;
+            
+            for (let i = -radius; i <= radius; i++) {
+                const value = Math.exp(-(i * i) / (2 * sigma * sigma));
+                kernel[i + radius] = value;
+                sum += value;
+            }
+            
+            // Normalize
+            for (let i = 0; i < kernel.length; i++) {
+                kernel[i] /= sum;
+            }
+            
+            return kernel;
+        }
+
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'coloring-page.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.upload-area');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#ff6b6b';
+            uploadArea.style.background = 'linear-gradient(45deg, #fff5f5, #ffe8e8)';
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'linear-gradient(45deg, #f8f9ff, #e8f0ff)';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#667eea';
+            uploadArea.style.background = 'linear-gradient(45deg, #f8f9ff, #e8f0ff)';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+    </script>
+</body>
+</html>
